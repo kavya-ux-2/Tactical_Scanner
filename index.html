@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Military Scanner</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- Style for the Debug Console -->
+    <style>
+        #debug-console {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-top: 1rem;
+            padding: 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            min-height: 4em;
+            white-space: pre-wrap;
+        }
+        .debug-success { color: var(--success-color); }
+        .debug-info { color: var(--warning-color); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-top">
+                <div class="logo">
+                    <div class="logo-icon">⚡</div>
+                    <div class="logo-text">
+                        <h1>TACTICAL SCANNER</h1>
+                        <div class="system-id">SYSTEM ID: TSC-2024</div>
+                    </div>
+                </div>
+                <div class="header-controls">
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span class="status-text">SYSTEM READY</span>
+                    </div>
+                    <div class="time-display">
+                        <span id="currentTime">00:00:00</span>
+                        <span class="date-display" id="currentDate">DD/MM/YYYY</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <div class="nav-item active">
+                    <span class="nav-icon">🎯</span>
+                    <span class="nav-text">TARGETING</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">ANALYTICS</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">SYSTEM</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📡</span>
+                    <span class="nav-text">NETWORK</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🔒</span>
+                    <span class="nav-text">SECURITY</span>
+                </div>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <section id="section-targeting" class="nav-section active">
+                <div class="targeting-flex">
+                    <div class="scanner-section">
+                        <div class="scanner-container">
+                            <div class="scanner-frame">
+                                <video id="video" autoplay playsinline></video>
+                                <canvas id="canvas" style="display: none;"></canvas>
+                                <canvas id="detectionCanvas" style="display: none;"></canvas>
+                            </div>
+                            <div class="scanner-controls">
+                                <div class="control-group">
+                                    <button id="startCamera" class="btn tactical primary">INITIALIZE SCANNER</button>
+                                    <button id="stopCamera" class="btn tactical secondary" disabled>TERMINATE</button>
+                                </div>
+                                <div class="control-group">
+                                    <button id="capture" class="btn tactical primary" disabled>CAPTURE</button>
+                                    <div class="scope-switch">
+                                        <button id="scope-eo" class="scope-btn active">EO</button>
+                                        <button id="scope-ir" class="scope-btn">IR</button>
+                                    </div>
+                                    <button id="detect" class="btn tactical primary" disabled>ANALYZE</button>
+                                </div>
+                                <div class="control-group">
+                                    <input type="file" id="fileInput" accept="image/*" class="file-input">
+                                    <label for="fileInput" class="btn tactical secondary">IMPORT DATA</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="debug-console">Awaiting user input...</div>
+                    </div>
+                    <div class="info-panel">
+                        <div class="info-card">
+                            <div class="card-header"><h3>SYSTEM STATUS</h3></div>
+                            <div class="status-info">
+                                <div class="status-item"><span class="label">MODEL STATUS:</span><span class="value" id="modelStatus">STANDBY</span></div>
+                                <div class="status-item"><span class="label">SCANNER STATUS:</span><span class="value" id="cameraStatus">STANDBY</span></div>
+                                <div class="status-item"><span class="label">LAST SCAN:</span><span class="value" id="lastScan">--:--:--</span></div>
+                            </div>
+                        </div>
+                        <div class="info-card missile-control">
+                            <div class="card-header"><h3>MISSILE LAUNCH CONTROL</h3></div>
+                            <div class="missile-controls">
+                                <div class="control-group">
+                                    <div class="angle-control">
+                                        <label>LAUNCH ANGLE</label>
+                                        <input type="range" id="launchAngle" min="0" max="90" value="45" class="slider">
+                                        <span id="angleValue">45°</span>
+                                    </div>
+                                    <div class="direction-control">
+                                        <label>LAUNCH DIRECTION</label>
+                                        <input type="range" id="launchDirection" min="0" max="360" value="0" class="slider">
+                                        <span id="directionValue">0°</span>
+                                    </div>
+                                </div>
+                                <div class="target-info">
+                                    <div class="status-item"><span class="label">TARGET COORDS:</span><span class="value" id="targetCoordinates">--</span></div>
+                                    <div class="status-item"><span class="label">TARGET DISTANCE:</span><span class="value" id="targetDistance">-- km</span></div>
+                                    <canvas id="trajectoryCanvas" width="300" height="150"></canvas>
+                                </div>
+                                <div class="launch-buttons">
+                                    <button id="calculateTrajectory" class="btn tactical primary" disabled>CALCULATE TRAJECTORY</button>
+                                    <button id="launchMissile" class="btn tactical danger" disabled>LAUNCH MISSILE</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="card-header"><h3>DETECTION METRICS</h3></div>
+                            <div class="stats-info">
+                                <div class="status-item"><span class="label">TARGETS IDENTIFIED:</span><span class="value" id="objectCount">0</span></div>
+                                <div class="status-item"><span class="label">AVG. CONFIDENCE:</span><span class="value" id="avgConfidence">0%</span></div>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="card-header"><h3>SYSTEM LOGS</h3></div>
+                            <div class="log-container" id="systemLogs"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="section-analytics" class="nav-section">
+                <div class="analytics-flex">
+                    <div class="results-panel">
+                        <div class="panel-header"><h2>GENERAL ANALYSIS</h2></div>
+                        <div class="detection-results" id="detectionResults">
+                            <div class="no-results"><p>AWAITING ANALYSIS...</p></div>
+                        </div>
+                    </div>
+                    <div class="results-panel weapon-analysis-panel">
+                        <div class="panel-header"><h2>THREAT CLASSIFICATION</h2></div>
+                        <div class="detection-results" id="weaponDetectionResults">
+                            <div class="no-results"><p>NO THREATS DETECTED</p></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-system" class="nav-section">
+                <div class="system-control-grid">
+                    <div class="info-card">
+                        <div class="card-header"><h3>SYSTEM DIAGNOSTICS</h3></div>
+                        <div class="diagnostics-log" id="diagnostics-log">
+                            <div class="log-entry">Awaiting diagnostics command...</div>
+                        </div>
+                        <div class="launch-buttons" style="margin-top: 1rem;">
+                            <button id="run-diagnostics-btn" class="btn tactical primary">RUN DIAGNOSTICS</button>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-header"><h3>PERFORMANCE MONITOR</h3></div>
+                        <div class="stats-info">
+                            <div class="status-item">
+                                <span class="label">CPU USAGE:</span>
+                                <span class="value" id="cpu-usage">--%</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">GPU USAGE:</span>
+                                <span class="value" id="gpu-usage">--%</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">MEMORY USAGE:</span>
+                                <span class="value" id="mem-usage">-- MB</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="label">NETWORK LATENCY:</span>
+                                <span class="value" id="net-latency">-- ms</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-header"><h3>MAINTENANCE TASKS</h3></div>
+                        <div class="maintenance-tasks">
+                            <button id="purge-cache-btn" class="btn tactical secondary">PURGE CACHE</button>
+                            <button id="recalibrate-sensors-btn" class="btn tactical secondary">RECALIBRATE SENSORS</button>
+                            <button id="reboot-system-btn" class="btn tactical danger">REBOOT SYSTEM</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-network" class="nav-section">
+                <div class="network-operations-center">
+                    <div class="noc-header"><h2>NETWORK OPERATIONS CENTER</h2></div>
+                    <div class="noc-table-container">
+                        <table class="noc-table">
+                            <thead>
+                                <tr>
+                                    <th>ASSET ID</th>
+                                    <th>LOCATION</th>
+                                    <th>STATUS</th>
+                                    <th>ACTIVITY</th>
+                                    <th>TRAFFIC (MB/S)</th>
+                                    <th>SIGNAL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="network-assets"></tbody>
+                        </table>
+                    </div>
+                    <div class="noc-traffic-history">
+                        <h3>AGGREGATE TRAFFIC HISTORY (MBPS)</h3>
+                        <div class="traffic-graph">
+                            <div class="traffic-labels">
+                                <span>Downlink</span>
+                                <span>Uplink</span>
+                            </div>
+                            <div class="traffic-bars">
+                                <div class="bar downlink-bar" id="downlink-bar"><span id="downlink-value">0</span></div>
+                                <div class="bar uplink-bar" id="uplink-bar"><span id="uplink-value">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-security" class="nav-section">
+                <div class="placeholder-card">
+                    <h2>Security Center</h2>
+                    <p>Review security logs, access controls, and threat alerts.</p>
+                </div>
+            </section>
+        </main>
+
+        <div class="scanning-overlay" id="scanningOverlay">
+            <div class="scanning-content">
+                <div class="scanning-animation"></div>
+                <p class="scanning-text">ANALYZING...</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
